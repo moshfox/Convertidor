@@ -6,24 +6,21 @@
     <title>Amside AI - Simple con Historial</title>
     <style>
         :root {
-            --primary-color: #f0f8ff; /* Alice Blue */
-            --secondary-color: #e0f2f7; /* Light Cyan lighten-3 */
-            --accent-color: #81d4fa; /* Light Blue lighten-2 */
-            --text-color-primary: #212121; /* Grey darken-4 */
-            --text-color-secondary: #757575; /* Grey */
-            --background-color: var(--primary-color);
-            --message-user-bg: var(--accent-color);
-            --message-ai-bg: var(--secondary-color);
-            --error-color: #f44336; /* Red accent-2 */
-            --border-radius: 8px;
-            --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            --primary-color: #f9f9f9; /* Light Grey */
+            --secondary-color: #e0f7fa; /* Teal lighten-5 */
+            --accent-color: #26a69a; /* Teal lighten-1 */
+            --text-color-primary: #333;
+            --text-color-secondary: #777;
+            --error-color: #d32f2f; /* Red darken-2 */
+            --border-radius: 10px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             --transition: all 0.3s ease-in-out;
-            --sidebar-width: 250px;
+            --sidebar-width: 280px;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--background-color);
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--primary-color);
             color: var(--text-color-primary);
             margin: 0;
             display: flex;
@@ -32,32 +29,35 @@
         }
 
         .sidebar {
-            background-color: var(--primary-color);
+            background-color: #fff;
             width: var(--sidebar-width);
-            border-right: 1px solid #e0e0e0;
-            padding: 20px;
+            border-right: 1px solid #eee;
+            padding: 25px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.03);
         }
 
         .sidebar-header {
             color: var(--text-color-primary);
-            margin-bottom: 20px;
-            text-align: center;
+            margin-bottom: 30px;
+            text-align: left;
             width: 100%;
         }
 
         .sidebar-header h2 {
             margin: 0;
-            font-size: 1.5em;
-            font-weight: 400;
+            font-size: 1.6em;
+            font-weight: 500;
         }
 
         .chat-list-title {
-            font-size: 1.1em;
+            font-size: 1em;
             color: var(--text-color-secondary);
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .chat-list {
@@ -68,21 +68,23 @@
         }
 
         .chat-list li {
-            padding: 10px 12px;
+            padding: 12px 15px;
             border-radius: var(--border-radius);
             margin-bottom: 8px;
             cursor: pointer;
-            background-color: #fff;
-            border: 1px solid #f0f0f0;
-            transition: background-color var(--transition);
+            background-color: var(--secondary-color);
+            color: var(--text-color-primary);
+            transition: background-color var(--transition), color var(--transition);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--secondary-color);
         }
 
         .chat-list li:hover {
-            background-color: #f5f5f5;
+            background-color: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
         }
 
         .chat-container {
@@ -94,15 +96,17 @@
             overflow: hidden;
             flex-grow: 1;
             margin-left: 20px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #eee;
         }
 
         .chat-header {
-            background-color: var(--secondary-color);
-            color: var(--text-color-primary);
+            background-color: var(--accent-color);
+            color: #fff;
             padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-top-left-radius: var(--border-radius);
+            border-top-right-radius: var(--border-radius);
         }
 
         .chat-header h2 {
@@ -121,7 +125,7 @@
         }
 
         .message {
-            background-color: var(--message-ai-bg);
+            background-color: var(--secondary-color);
             color: var(--text-color-secondary);
             border-radius: var(--border-radius);
             padding: 12px 16px;
@@ -130,6 +134,7 @@
             max-width: 80%;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             font-size: 1em;
+            border: 1px solid var(--secondary-color);
         }
 
         .error-message {
@@ -154,7 +159,7 @@
         }
 
         .user-message {
-            background-color: var(--message-user-bg);
+            background-color: var(--accent-color);
             color: #fff;
             border-radius: var(--border-radius);
             padding: 12px 16px;
@@ -191,7 +196,7 @@
 
         .input-area {
             padding: 15px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid #eee;
             display: flex;
             align-items: center;
             background-color: #fff;
@@ -216,8 +221,8 @@
         }
 
         .send-button {
-            background-color: var(--secondary-color);
-            color: var(--text-color-primary);
+            background-color: var(--accent-color);
+            color: #fff;
             border: none;
             padding: 10px 15px;
             border-radius: var(--border-radius);
@@ -227,15 +232,17 @@
         }
 
         .send-button:hover {
-            background-color: #b2ebf2; /* Light Cyan lighten-4 */
+            background-color: #00897b; /* Teal darken-1 */
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>Chats</h2>
+            <h2>Historial</h2>
         </div>
+        <h3 class="chat-list-title">Chats Anteriores</h3>
         <ul class="chat-list" id="chat-list">
             </ul>
     </div>
@@ -295,7 +302,7 @@
             chatList.innerHTML = '';
             chatHistory.forEach((chat, index) => {
                 const listItem = document.createElement('li');
-                listItem.textContent = chat.name.substring(0, 20) + (chat.name.length > 20 ? '...' : '');
+                listItem.textContent = chat.name.substring(0, 22) + (chat.name.length > 22 ? '...' : '');
                 listItem.addEventListener('click', () => {
                     currentChat = chat.messages;
                     displayChat(currentChat);
@@ -306,8 +313,8 @@
 
         function saveChat(firstUserMessage) {
             if (currentChat.length > 0 && firstUserMessage) {
-                const chatName = firstUserMessage.substring(0, 20);
-                chatHistory.push({ name: chatName, messages: [...currentChat] });
+                const chatName = firstUserMessage.substring(0, 25);
+                chatHistory.unshift({ name: chatName, messages: [...currentChat] }); // Add to the beginning
                 updateChatList();
             }
         }
