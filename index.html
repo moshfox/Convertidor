@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Una Página Interesante</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .hidden-converter {
+            display: none; /* Ocultamos completamente el convertidor */
+        }
+        #secretMessage {
+            display: none; /* Ocultamos el mensaje de redirección */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Bienvenido a esta Página</h1>
+    <p>Aquí encontrarás información útil y cosas interesantes. Explora el contenido y descubre más.</p>
+    <ul>
+        <li>Enlace a un recurso útil: <a href="#">Haz clic aquí</a></li>
+        <li>Otro enlace interesante: <a href="#">Visita esta página</a></li>
+        <li>Información adicional...</li>
+    </ul>
+
+    <div class="hidden-converter">
+        <h2>Convertidor de Archivos (Secreto)</h2>
+        <p>Selecciona un archivo PDF para convertir:</p>
+        <input type="file" id="secretPdfFile" accept=".pdf">
+        <select id="secretTargetFormat">
+            <option value="doc">A Word (.doc)</option>
+            <option value="txt">A Texto (.txt)</option>
+            <option value="jpg">A Imagen (.jpg)</option>
+        </select>
+        <button onclick="secretConvertFile()">Convertir</button>
+        <p id="secretConversionResult"></p>
+    </div>
+
+    <p id="secretMessage">Redirigiendo a la página secreta...</p>
+
+    <script>
+        let secretSequence = "";
+        const targetSequence = "ilm";
+        const redirectURL = "URL_DE_LA_WEB_COMPARTIDA"; // ¡REEMPLAZA ESTO!
+        const secretMessageElement = document.getElementById("secretMessage");
+        const hiddenConverter = document.querySelector(".hidden-converter");
+
+        document.addEventListener("keydown", function(event) {
+            secretSequence += event.key.toLowerCase();
+            if (secretSequence.length > targetSequence.length) {
+                secretSequence = secretSequence.slice(-targetSequence.length);
+            }
+            if (secretSequence === targetSequence) {
+                secretMessageElement.style.display = "block";
+                setTimeout(function() {
+                    window.location.href = redirectURL;
+                }, 1500);
+            }
+        });
+
+        function secretConvertFile() {
+            const fileInput = document.getElementById("secretPdfFile");
+            const targetFormat = document.getElementById("secretTargetFormat").value;
+            const conversionResultElement = document.getElementById("secretConversionResult");
+
+            if (fileInput.files.length > 0) {
+                const selectedFile = fileInput.files[0];
+                conversionResultElement.textContent = `Simulando conversión secreta de "${selectedFile.name}" a "${targetFormat}"...`;
+                setTimeout(() => {
+                    conversionResultElement.textContent = `¡Conversión secreta completada a ${targetFormat}! (Simulación)`;
+                }, 2000);
+            } else {
+                conversionResultElement.textContent = "Por favor, selecciona un archivo.";
+            }
+        }
+    </script>
+
+</body>
+</html>
