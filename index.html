@@ -3,109 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amside AI - Interfaz Inteligente</title>
+    <title>Amside AI - Simple</title>
     <style>
         :root {
-            --primary-color: #e3f2fd; /* Azul muy claro */
-            --secondary-color: #2196f3; /* Azul principal */
-            --accent-color: #03a9f4; /* Azul acento */
-            --text-color-primary: #333;
-            --text-color-secondary: #777;
-            --background-color: #f9f9f9;
-            --message-user-bg: linear-gradient(to right, #bbdefb, #64b5f6); /* Azul degradado */
-            --message-ai-bg: #e0f7fa; /* Blanco azulado */
-            --border-radius: 12px;
-            --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            --primary-color: #f0f8ff; /* Alice Blue */
+            --secondary-color: #e0f2f7; /* Light Cyan lighten-3 */
+            --accent-color: #81d4fa; /* Light Blue lighten-2 */
+            --text-color-primary: #212121; /* Grey darken-4 */
+            --text-color-secondary: #757575; /* Grey */
+            --background-color: var(--primary-color);
+            --message-user-bg: var(--accent-color);
+            --message-ai-bg: var(--secondary-color);
+            --border-radius: 8px;
+            --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease-in-out;
-            --sidebar-width: 300px;
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--background-color);
             color: var(--text-color-primary);
             margin: 0;
             display: flex;
-            min-height: 100vh;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        .sidebar {
-            background-color: var(--primary-color);
-            width: var(--sidebar-width);
-            border-right: 1px solid #e0e0e0;
-            padding: 30px;
-            display: flex;
             flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .sidebar-header {
-            color: var(--text-color-primary);
-            margin-bottom: 40px;
-            text-align: center;
-            width: 100%;
-        }
-
-        .sidebar-header h1 {
-            font-size: 2.5em;
-            margin: 0;
-            font-weight: 300;
-            letter-spacing: 0.8px;
-        }
-
-        .new-chat-button {
-            background-color: var(--secondary-color);
-            color: var(--text-color-primary);
-            border: none;
-            padding: 18px 24px;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            font-size: 1.1em;
-            margin-bottom: 30px;
-            transition: background-color var(--transition);
-            width: 100%;
-            text-align: left;
-            display: flex;
+            min-height: 100vh;
+            padding: 20px;
             align-items: center;
-            justify-content: flex-start;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .new-chat-button svg {
-            margin-right: 12px;
-        }
-
-        .chat-list-title {
-            font-size: 1.2em;
-            color: var(--text-color-secondary);
-            margin-bottom: 20px;
-        }
-
-        .chat-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            width: 100%;
-        }
-
-        .chat-list li {
-            padding: 15px 20px;
-            border-radius: var(--border-radius);
-            margin-bottom: 12px;
-            cursor: pointer;
-            background-color: #fff;
-            border: 1px solid #f0f0f0;
-            transition: background-color var(--transition);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-        }
-
-        .chat-list li:hover {
-            background-color: #f5f5f5;
+            justify-content: center;
         }
 
         .chat-container {
@@ -115,117 +39,107 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            flex-grow: 1;
-            margin: 30px;
-            border: 1px solid #eee;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid #e0e0e0;
         }
 
         .chat-header {
-            background-color: var(--primary-color);
+            background-color: var(--secondary-color);
             color: var(--text-color-primary);
-            padding: 35px;
+            padding: 20px;
             text-align: center;
-            border-top-left-radius: var(--border-radius);
-            border-top-right-radius: var(--border-radius);
             border-bottom: 1px solid #e0e0e0;
         }
 
         .chat-header h2 {
             margin: 0;
-            font-size: 2.8em;
-            font-weight: 300;
-            letter-spacing: 1px;
+            font-size: 1.8em;
+            font-weight: 400;
         }
 
         .chat-body {
-            padding: 30px;
+            padding: 20px;
             overflow-y: auto;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 15px;
         }
 
         .message {
             background-color: var(--message-ai-bg);
             color: var(--text-color-secondary);
             border-radius: var(--border-radius);
-            padding: 20px;
+            padding: 12px 16px;
             word-break: break-word;
             align-self: flex-start;
             max-width: 80%;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            transition: var(--transition);
-            font-size: 1.05em;
-            border: 1px solid #f0f0f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 1em;
         }
 
         .user-message {
-            background: var(--message-user-bg);
-            color: var(--text-color-primary);
+            background-color: var(--message-user-bg);
+            color: #fff;
             align-self: flex-end;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .input-area {
-            padding: 30px;
+            padding: 15px;
             border-top: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
-            background-color: var(--primary-color);
+            background-color: #fff;
             border-bottom-left-radius: var(--border-radius);
             border-bottom-right-radius: var(--border-radius);
         }
 
         .input-field {
             flex-grow: 1;
-            padding: 18px;
-            border: none;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
             border-radius: var(--border-radius);
-            margin-right: 20px;
-            font-size: 1.15em;
-            background-color: #fff;
+            margin-right: 10px;
+            font-size: 1em;
             color: var(--text-color-primary);
-            transition: border-color var(--transition);
-            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.05);
         }
 
         .input-field:focus {
             outline: none;
-            border-color: var(--secondary-color);
-            box-shadow: 0 2px 8px rgba(var(--secondary-color-rgb), 0.2);
+            border-color: var(--accent-color);
+            box-shadow: 0 1px 3px rgba(var(--accent-color-rgb), 0.2);
         }
 
         .send-button {
-            background-color: var(--accent-color);
+            background-color: var(--secondary-color);
             color: var(--text-color-primary);
             border: none;
-            padding: 18px 24px;
+            padding: 10px 15px;
             border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 1.15em;
+            font-size: 1em;
             transition: background-color var(--transition);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
         .send-button:hover {
-            background-color: #0288d1;
+            background-color: #b2ebf2; /* Light Cyan lighten-4 */
         }
 
         .loading-indicator {
             display: none;
             align-self: flex-start;
-            margin-bottom: 25px;
+            margin-top: 10px;
             display: flex;
             align-items: center;
         }
 
         .loading-spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-top: 4px solid var(--accent-color);
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top: 3px solid var(--accent-color);
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 20px;
+            height: 20px;
             animation: spin 1s linear infinite;
         }
 
@@ -233,94 +147,23 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        #error-message {
-            color: #d32f2f;
-            font-size: 1.1em;
-            margin-top: 30px;
-            text-align: center;
-            display: none;
-            background-color: #ffebee;
-            padding: 15px;
-            border-radius: var(--border-radius);
-            border: 1px solid #ef9a9a;
-        }
-
-        #secret-iframe-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-        }
-
-        #secret-iframe {
-            width: 80%;
-            height: 80%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: none;
-            border-radius: var(--border-radius);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        #close-iframe-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: var(--text-color-primary);
-            background: none;
-            border: none;
-            font-size: 1.8em;
-            cursor: pointer;
-            z-index: 1001;
-        }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h1>Amside AI</h1>
-        </div>
-        <button class="new-chat-button" id="new-chat-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-plus-square-fill" viewBox="0 0 16 16">
-                <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z"/>
-            </svg>
-            Nuevo Chat
-        </button>
-        <h3 class="chat-list-title">Chats Anteriores</h3>
-        <ul class="chat-list" id="chat-list">
-            </ul>
-    </div>
     <div class="chat-container">
         <div class="chat-header">
             <h2>Amside AI</h2>
         </div>
         <div class="chat-body" id="chat-messages">
-            <div class="message">Saludos. ¿Cómo puedo asistirte hoy?</div>
+            <div class="message">Hola. ¿En qué puedo ayudarte?</div>
             <div class="loading-indicator">
                 <div class="loading-spinner"></div>
-                <span style="margin-left: 10px; font-size: 1em; color: var(--text-color-secondary);">Procesando...</span>
+                <span style="margin-left: 8px; font-size: 0.9em; color: var(--text-color-secondary);">Procesando...</span>
             </div>
         </div>
         <div class="input-area">
-            <input type="text" class="input-field" placeholder="Escribe tu consulta aquí...">
-            <button class="send-button" id="send-button">Enviar
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16">
-                    <path d="m15.964.686a.5.5 0 0 0-.65-.65L.767 5.865l14.83 2.17a.5.5 0 0 0 .65.65L1.767 9.135l-1.597 5.73a.5.5 0 0 0 .65.65l16-8a.5.5 0 0 0-.013-.113l-4.354-4.354L15.964.686Z"/>
-                </svg>
-            </button>
-        </div>
-        <div id="error-message">El servicio de Amside AI no está disponible temporalmente. Por favor, intenta enviar tu mensaje de nuevo en unos minutos.</div>
-        <div id="secret-iframe-container">
-            <button id="close-iframe-button">&times;</button>
-            <iframe id="secret-iframe" src="URL_DE_LA_WEB_COMPARTIDA" frameborder="0"></iframe>
+            <input type="text" class="input-field" placeholder="Escribe tu mensaje...">
+            <button class="send-button" id="send-button">Enviar</button>
         </div>
     </div>
 
@@ -329,121 +172,40 @@
         const inputField = document.querySelector('.input-field');
         const sendButton = document.getElementById('send-button');
         const loadingIndicator = document.querySelector('.loading-indicator');
-        const errorMessageElement = document.getElementById('error-message');
-        const secretIframeContainer = document.getElementById('secret-iframe-container');
-        const closeIframeButton = document.getElementById('close-iframe-button');
-        const chatList = document.getElementById('chat-list');
-        const newChatButton = document.getElementById('new-chat-button');
 
-        let currentChatMessages = [];
-        let chatHistory = [];
-        let isNewChat = true;
-        let secretSequence = "";
-        const targetSequence = "ilm";
-        const redirectURL = "URL_DE_LA_WEB_COMPARTIDA"; // ¡REEMPLAZA ESTO!
-
-        function displayChat(messages) {
-            chatMessages.innerHTML = '';
-            messages.forEach(msg => {
-                const messageDiv = document.createElement('div');
-                messageDiv.classList.add('message', msg.sender);
-                messageDiv.textContent = msg.text;
-                chatMessages.appendChild(messageDiv);
-            });
-            if (loadingIndicator.style.display === 'flex') {
-                chatMessages.appendChild(loadingIndicator);
-            }
+        function displayMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
             scrollToBottom();
         }
-
-        function updateChatList() {
-            chatList.innerHTML = '';
-            chatHistory.forEach((chat, index) => {
-                const listItem = document.createElement('li');
-                listItem.textContent = chat.name;
-                listItem.addEventListener('click', () => {
-                    currentChatMessages = chat.messages;
-                    displayChat(currentChatMessages);
-                });
-                chatList.appendChild(listItem);
-            });
-        }
-
-        newChatButton.addEventListener('click', () => {
-            currentChatMessages = [];
-            displayChat(currentChatMessages);
-            isNewChat = true;
-        });
 
         sendButton.addEventListener('click', () => {
             const messageText = inputField.value.trim();
             if (messageText !== '') {
-                const userMessage = { sender: 'user-message', text: messageText };
-                currentChatMessages.push(userMessage);
-                displayChat(currentChatMessages);
+                displayMessage('user-message', messageText);
                 inputField.value = '';
 
                 loadingIndicator.style.display = 'flex';
-                const loadingDiv = document.createElement('div');
-                loadingDiv.classList.add('loading-indicator');
-                loadingDiv.innerHTML = '<div class="loading-spinner"></div><span style="margin-left: 10px; font-size: 1em; color: var(--text-color-secondary);">Procesando...&lt;/span>';
-                chatMessages.appendChild(loadingDiv);
+                setTimeout(() => {
+                    loadingIndicator.style.display = 'none';
+                    displayMessage('message', 'Ahora mismo no puedo responder. Mi servidor está caído.');
+                }, 1500); // Simula un tiempo de respuesta
+            }
+        });
 
-setTimeout(() => {
-                    const loadingElements = chatMessages.querySelectorAll('.loading-indicator');
-                    loadingElements.forEach(el => el.remove());
-                    loadingIndicator.style.display = 'none';
-                    errorMessageElement.style.display = 'block'; // Mostrar el mensaje de error
+        inputField.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendButton.click();
+            }
+        });
 
-setTimeout(() => {
-                        errorMessageElement.style.display = 'none'; // Ocultar el mensaje de error después de un tiempo
-                        const aiMessageText = "El servicio de Amside AI no está disponible temporalmente. Por favor, intenta enviar tu mensaje de nuevo en unos minutos.";
-                        const aiMessage = { sender: 'message', text: aiMessageText };
-                        currentChatMessages.push(aiMessage);
-                        displayChat(currentChatMessages);
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
 
-if (isNewChat && chatHistory.length &lt; 5) {
-                            chatHistory.push({ name: messageText.substring(0, 20) + '...', messages: [...currentChatMessages] });
-                            updateChatList();
-                            isNewChat = false;
-                        } else if (!isNewChat) {
-                            const currentChatIndex = chatHistory.findIndex(chat => chat.messages === currentChatMessages);
-                            if (currentChatIndex !== -1) {
-                                chatHistory[currentChatIndex].messages = [...currentChatMessages];
-                            }
-                        }
-                    }, 2500); // Tiempo que se muestra el mensaje de error
-                }, 3500); // Simulación de la respuesta con error
-            }
-        });
-
-inputField.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                sendButton.click();
-            }
-        });
-
-document.addEventListener('keypress', (event) => {
-            secretSequence += event.key.toLowerCase();
-            if (secretSequence.endsWith(targetSequence)) {
-                secretIframeContainer.style.display = 'block';
-                secretSequence = ""; // Reiniciar la secuencia
-            } else if (secretSequence.length > targetSequence.length) {
-                secretSequence = secretSequence.slice(-targetSequence.length); // Mantener solo los últimos caracteres
-            }
-        });
-
-closeIframeButton.addEventListener('click', () => {
-            secretIframeContainer.style.display = 'none';
-        });
-
-function scrollToBottom() {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-updateChatList();
-        scrollToBottom();
-    &lt;/script>
-
-&lt;/body>
-&lt;/html>
+        scrollToBottom();
+    </script>
+</body>
+</html>
