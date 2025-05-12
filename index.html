@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amside AI - Simple</title>
+    <title>Amside AI - Simple con Historial</title>
     <style>
         :root {
             --primary-color: #f0f8ff; /* Alice Blue */
@@ -17,6 +17,7 @@
             --border-radius: 8px;
             --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease-in-out;
+            --sidebar-width: 250px;
         }
 
         body {
@@ -25,11 +26,62 @@
             color: var(--text-color-primary);
             margin: 0;
             display: flex;
-            flex-direction: column;
             min-height: 100vh;
             padding: 20px;
-            align-items: center;
-            justify-content: center;
+        }
+
+        .sidebar {
+            background-color: var(--primary-color);
+            width: var(--sidebar-width);
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .sidebar-header {
+            color: var(--text-color-primary);
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 400;
+        }
+
+        .chat-list-title {
+            font-size: 1.1em;
+            color: var(--text-color-secondary);
+            margin-bottom: 10px;
+        }
+
+        .chat-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        .chat-list li {
+            padding: 10px 12px;
+            border-radius: var(--border-radius);
+            margin-bottom: 8px;
+            cursor: pointer;
+            background-color: #fff;
+            border: 1px solid #f0f0f0;
+            transition: background-color var(--transition);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        .chat-list li:hover {
+            background-color: #f5f5f5;
         }
 
         .chat-container {
@@ -39,8 +91,8 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            width: 90%;
-            max-width: 600px;
+            flex-grow: 1;
+            margin-left: 20px;
             border: 1px solid #e0e0e0;
         }
 
@@ -79,10 +131,48 @@
             font-size: 1em;
         }
 
+        .user-message-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            max-width: 80%;
+            align-self: flex-end;
+        }
+
         .user-message {
             background-color: var(--message-user-bg);
             color: #fff;
+            border-radius: var(--border-radius);
+            padding: 12px 16px;
+            word-break: break-word;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .loading-indicator {
+            display: none;
             align-self: flex-end;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+            color: var(--text-color-secondary);
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .input-area {
@@ -125,41 +215,22 @@
         .send-button:hover {
             background-color: #b2ebf2; /* Light Cyan lighten-4 */
         }
-
-        .loading-indicator {
-            display: none;
-            align-self: flex-start;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-        }
-
-        .loading-spinner {
-            border: 3px solid rgba(0, 0, 0, 0.1);
-            border-top: 3px solid var(--accent-color);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Chats</h2>
+        </div>
+        <ul class="chat-list" id="chat-list">
+            </ul>
+    </div>
     <div class="chat-container">
         <div class="chat-header">
             <h2>Amside AI</h2>
         </div>
         <div class="chat-body" id="chat-messages">
             <div class="message">Hola. ¿En qué puedo ayudarte?</div>
-            <div class="loading-indicator">
-                <div class="loading-spinner"></div>
-                <span style="margin-left: 8px; font-size: 0.9em; color: var(--text-color-secondary);">Procesando...</span>
-            </div>
         </div>
         <div class="input-area">
             <input type="text" class="input-field" placeholder="Escribe tu mensaje...">
@@ -171,27 +242,80 @@
         const chatMessages = document.getElementById('chat-messages');
         const inputField = document.querySelector('.input-field');
         const sendButton = document.getElementById('send-button');
-        const loadingIndicator = document.querySelector('.loading-indicator');
+        const chatList = document.getElementById('chat-list');
 
-        function displayMessage(sender, text) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', sender);
-            messageDiv.textContent = text;
-            chatMessages.appendChild(messageDiv);
+        let chatHistory = [];
+        let currentChat = [];
+
+        function displayChat(messages) {
+            chatMessages.innerHTML = '';
+            messages.forEach(msg => {
+                const messageContainer = document.createElement('div');
+                if (msg.sender === 'user') {
+                    messageContainer.classList.add('user-message-container');
+                    const userMessageDiv = document.createElement('div');
+                    userMessageDiv.classList.add('user-message');
+                    userMessageDiv.textContent = msg.text;
+                    messageContainer.appendChild(userMessageDiv);
+                    const loadingIndicator = document.createElement('div');
+                    loadingIndicator.classList.add('loading-indicator');
+                    loadingIndicator.innerHTML = '<div class="loading-spinner"></div> Procesando...';
+                    messageContainer.appendChild(loadingIndicator);
+                    chatMessages.appendChild(messageContainer);
+                } else {
+                    const aiMessageDiv = document.createElement('div');
+                    aiMessageDiv.classList.add('message');
+                    aiMessageDiv.textContent = msg.text;
+                    chatMessages.appendChild(aiMessageDiv);
+                }
+            });
             scrollToBottom();
+        }
+
+        function updateChatList() {
+            chatList.innerHTML = '';
+            chatHistory.forEach((chat, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = chat.name.substring(0, 20) + (chat.name.length > 20 ? '...' : '');
+                listItem.addEventListener('click', () => {
+                    currentChat = chat.messages;
+                    displayChat(currentChat);
+                });
+                chatList.appendChild(listItem);
+            });
+        }
+
+        function saveChat() {
+            if (currentChat.length > 0) {
+                const latestMessage = currentChat[currentChat.length - 1].text;
+                const chatName = latestMessage.substring(0, 20);
+                const existingChatIndex = chatHistory.findIndex(chat => chat.messages === currentChat);
+                if (existingChatIndex === -1) {
+                    chatHistory.push({ name: chatName, messages: [...currentChat] });
+                    updateChatList();
+                }
+            }
         }
 
         sendButton.addEventListener('click', () => {
             const messageText = inputField.value.trim();
             if (messageText !== '') {
-                displayMessage('user-message', messageText);
+                const userMessage = { sender: 'user', text: messageText };
+                currentChat.push(userMessage);
+                displayChat([...currentChat]); // Display with loading indicator
+
                 inputField.value = '';
 
-                loadingIndicator.style.display = 'flex';
+                const loadingElement = chatMessages.lastElementChild.querySelector('.loading-indicator');
                 setTimeout(() => {
-                    loadingIndicator.style.display = 'none';
-                    displayMessage('message', 'Ahora mismo no puedo responder. Mi servidor está caído.');
-                }, 1500); // Simula un tiempo de respuesta
+                    if (loadingElement) {
+                        loadingElement.remove();
+                        const aiResponse = { sender: 'ai', text: 'Ahora mismo no puedo responder. Mi servidor está caído.' };
+                        currentChat.push(aiResponse);
+                        displayChat([...currentChat]);
+                        saveChat();
+                    }
+                }, 2000); // Simulate longer processing time
             }
         });
 
@@ -205,6 +329,8 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
+        // Initial display and setup
+        updateChatList();
         scrollToBottom();
     </script>
 </body>
