@@ -367,7 +367,6 @@
                 "Estoy bien, gracias por preguntar. Siempre en línea y listo para asistir.",
                 "¡Excelente! Siempre listo para interactuar y ayudarte."
             ],
-            // --- Puedes añadir más palabras clave y sus variantes aquí ---
             "tiempo": [
                 "Para el tiempo actual, necesitaría saber tu ubicación exacta. ¿Me la podrías proporcionar?",
                 "No tengo acceso directo a datos meteorológicos en tiempo real. Te sugiero consultar una aplicación del tiempo.",
@@ -479,11 +478,10 @@
                 if (lowerCaseMessage.includes(keyword)) {
                     const responses = predefinedResponses[keyword];
                     response = responses[Math.floor(Math.random() * responses.length)];
-                    break; // Una vez que encuentra una coincidencia, selecciona y sale
+                    break;
                 }
             }
 
-            // Si no se encuentra ninguna palabra clave, usa una respuesta genérica
             if (!response) {
                 const genericResponses = [
                     "No estoy seguro de haber entendido. ¿Podrías reformular tu pregunta?",
@@ -497,8 +495,36 @@
             return response;
         }
 
+        // Función para añadir un solo mensaje al chat
+        function addMessageToChat(msg) {
+            const messageContainer = document.createElement('div');
+            if (msg.sender === 'user') {
+                messageContainer.classList.add('user-message-container');
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.classList.add('user-message');
+                userMessageDiv.textContent = msg.text;
+                messageContainer.appendChild(userMessageDiv);
+                // El indicador de carga se añade en la lógica del botón de enviar
+                // para que solo aparezca al momento de enviar y no en el historial.
+            } else if (msg.sender === 'ai') {
+                const aiMessageDiv = document.createElement('div');
+                aiMessageDiv.classList.add('message');
+                aiMessageDiv.textContent = msg.text;
+                messageContainer.appendChild(aiMessageDiv); // Añadir al contenedor
+            } else if (msg.sender === 'error') {
+                const errorMessageDiv = document.createElement('div');
+                errorMessageDiv.classList.add('error-message');
+                errorMessageDiv.textContent = msg.text;
+                messageContainer.appendChild(errorMessageDiv); // Añadir al contenedor
+            }
+            chatMessages.appendChild(messageContainer);
+            scrollToBottom();
+        }
+
+        // Modificamos displayChat para que vacíe y luego añada,
+        // esto es útil cuando se carga un historial desde la lista de chats.
         function displayChat(messages) {
-            chatMessages.innerHTML = '';
+            chatMessages.innerHTML = ''; // Vaciar todo antes de cargar el historial
             messages.forEach(msg => {
                 const messageContainer = document.createElement('div');
                 if (msg.sender === 'user') {
@@ -507,23 +533,22 @@
                     userMessageDiv.classList.add('user-message');
                     userMessageDiv.textContent = msg.text;
                     messageContainer.appendChild(userMessageDiv);
-                    // El indicador de carga solo se añade al enviar el mensaje, no al redibujar el historial.
-                    // Si este es el último mensaje y es de usuario, y no hay una respuesta todavía, se podría mostrar.
-                    // Pero la lógica de enviar ya lo maneja al crear un nuevo elemento.
                 } else if (msg.sender === 'ai') {
                     const aiMessageDiv = document.createElement('div');
                     aiMessageDiv.classList.add('message');
                     aiMessageDiv.textContent = msg.text;
-                    chatMessages.appendChild(aiMessageDiv);
+                    messageContainer.appendChild(aiMessageDiv);
                 } else if (msg.sender === 'error') {
                     const errorMessageDiv = document.createElement('div');
                     errorMessageDiv.classList.add('error-message');
                     errorMessageDiv.textContent = msg.text;
-                    chatMessages.appendChild(errorMessageDiv);
+                    messageContainer.appendChild(errorMessageDiv);
                 }
+                chatMessages.appendChild(messageContainer);
             });
             scrollToBottom();
         }
+
 
         function updateChatList() {
             chatList.innerHTML = '';
@@ -541,44 +566,45 @@
         function saveChat(firstUserMessage) {
             if (currentChat.length > 0 && firstUserMessage) {
                 const chatName = firstUserMessage.substring(0, 25);
-                // Evitar duplicados si el chat ya fue guardado
-                if (!chatHistory.some(chat => chat.messages === currentChat)) {
-                    chatHistory.unshift({ name: chatName, messages: currentChat }); // Añadir al principio
+                // Evitar duplicados si el chat ya fue guardado o si es el chat vacío inicial
+                if (!chatHistory.some(chat => chat.messages === currentChat) && currentChat.length > 1) { // Asegurarse que haya mensajes de usuario
+                    chatHistory.unshift({ name: chatName, messages: [...currentChat] }); // Usar spread para guardar una copia
                     updateChatList();
                 }
             }
         }
 
         function startNewChat() {
-            // Antes de iniciar un nuevo chat, guarda el chat actual si tiene mensajes de usuario
-            if (currentChat.length > 1 && currentChat[0].sender === 'ai' && currentChat[1].sender === 'user') { // Si ya hay un mensaje de bienvenida y al menos uno de usuario
-                saveChat(currentChat[1].text); // Guarda con el texto del primer mensaje de usuario
+            // Guarda el chat actual antes de empezar uno nuevo, si hay algo relevante que guardar
+            if (currentChat.length > 1 && currentChat[0].sender === 'ai' && currentChat[1].sender === 'user') {
+                saveChat(currentChat[1].text);
             }
-            currentChat = [{ sender: 'ai', text: 'Bienvenido a Amside AI.' }]; // Mensaje inicial en cada nuevo chat
-            displayChat(currentChat);
+            currentChat = [{ sender: 'ai', text: 'Bienvenido a Amside AI.' }];
+            displayChat(currentChat); // Mostrar el mensaje de bienvenida
         }
 
         sendButton.addEventListener('click', () => {
             const messageText = inputField.value.trim();
             if (messageText !== '') {
-                const isFirstUserMessageInChat = currentChat.length === 1 && currentChat[0].sender === 'ai'; // Verifica si es el primer mensaje del usuario después del saludo de la IA
+                const isFirstUserMessageInChat = currentChat.length === 1 && currentChat[0].sender === 'ai';
 
                 const userMessage = { sender: 'user', text: messageText };
                 currentChat.push(userMessage);
 
-                // Añadir el mensaje de usuario con el indicador de carga
-                const messageContainer = document.createElement('div');
-                messageContainer.classList.add('user-message-container');
+                // Añadir directamente el mensaje del usuario con el indicador de carga
+                const userMessageContainer = document.createElement('div');
+                userMessageContainer.classList.add('user-message-container');
                 const userMessageDiv = document.createElement('div');
                 userMessageDiv.classList.add('user-message');
                 userMessageDiv.textContent = userMessage.text;
-                messageContainer.appendChild(userMessageDiv);
+                userMessageContainer.appendChild(userMessageDiv);
 
                 const loadingIndicator = document.createElement('div');
                 loadingIndicator.classList.add('loading-indicator');
                 loadingIndicator.innerHTML = '<div class="loading-spinner"></div> Procesando...';
-                messageContainer.appendChild(loadingIndicator);
-                chatMessages.appendChild(messageContainer);
+                userMessageContainer.appendChild(loadingIndicator); // Añadir el indicador al contenedor del mensaje del usuario
+                
+                chatMessages.appendChild(userMessageContainer); // Añadir el contenedor completo al chat
                 scrollToBottom();
 
                 inputField.value = ''; // Limpiar el campo de entrada
@@ -588,16 +614,23 @@
                     const aiResponseText = getAIResponse(messageText);
                     const aiResponse = { sender: 'ai', text: aiResponseText };
 
-                    // Eliminar el indicador de carga
-                    if (loadingIndicator && chatMessages.contains(messageContainer)) {
+                    // Eliminar el indicador de carga del DOM
+                    if (loadingIndicator && userMessageContainer.contains(loadingIndicator)) {
                         loadingIndicator.remove();
                     }
 
                     currentChat.push(aiResponse); // Añadir la respuesta de la IA al chat actual
-                    displayChat(currentChat); // Volver a renderizar el chat con la respuesta de la IA
+
+                    // Añadir la respuesta de la IA directamente al DOM
+                    const aiMessageDiv = document.createElement('div');
+                    aiMessageDiv.classList.add('message');
+                    aiMessageDiv.textContent = aiResponse.text;
+                    chatMessages.appendChild(aiMessageDiv); // Añadir directamente
+                    scrollToBottom();
+
 
                     if (isFirstUserMessageInChat) {
-                        saveChat(messageText); // Guardar el chat solo si es el primer mensaje de usuario
+                        saveChat(messageText);
                     }
                 }, 1500); // Simula un tiempo de procesamiento
             }
@@ -617,8 +650,8 @@
         }
 
         // Inicializar al cargar la página
-        startNewChat(); // Empieza con el mensaje de bienvenida de la IA
-        updateChatList(); // Asegura que la lista de chats se muestre correctamente
+        startNewChat();
+        updateChatList();
     </script>
 </body>
 </html>
