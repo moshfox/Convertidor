@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amside AI - Interfaz Avanzada</title>
+    <title>Amside AI - Interfaz con IA Real</title>
     <style>
         :root {
             --primary-color: #22272b; /* Dark Background */
@@ -36,6 +36,7 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            flex-shrink: 0; /* Evita que la barra lateral se encoja */
         }
 
         .sidebar-header {
@@ -205,7 +206,7 @@
         }
 
         .loading-indicator {
-            display: flex; /* Always display but control visibility via JS or parent */
+            display: flex;
             align-self: flex-end;
             margin-top: 5px;
             align-items: center;
@@ -271,6 +272,12 @@
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script type="module">
+        // La importación de HfInference debe hacerse de esta manera para funcionar sin un bundler
+        // Nota: Esto hace que el navegador descargue la librería cuando carga la página.
+        import { HfInference } from 'https://cdn.jsdelivr.net/npm/@huggingface/inference';
+        window.HfInference = HfInference; // Exponemos HfInference globalmente para usarlo en el script principal
+    </script>
 </head>
 <body>
     <div class="sidebar">
@@ -305,7 +312,13 @@
         </div>
     </div>
 
-    <script>
+    <script type="module"> // Script principal como módulo para acceder a HfInference
+        // Asegúrate de que HfInference esté disponible (cargado por el script de arriba)
+        if (typeof window.HfInference === 'undefined') {
+            console.error("Error: HfInference no está disponible. Asegúrate de que el script CDN se haya cargado correctamente.");
+            // Podrías mostrar un mensaje al usuario o deshabilitar la funcionalidad de chat
+        }
+
         const chatMessages = document.getElementById('chat-messages');
         const inputField = document.querySelector('.input-field');
         const sendButton = document.getElementById('send-button');
@@ -316,184 +329,11 @@
         let chatHistory = [];
         let currentChat = [];
 
-        // --- Diccionario de respuestas predefinidas ---
-        const predefinedResponses = {
-            "hola": [
-                "¡Hola! ¿En qué puedo ayudarte hoy?",
-                "¡Saludos! ¿Cómo estás?",
-                "Hola, me alegra verte. ¿Tienes alguna pregunta?",
-                "¡Qué bien que estés aquí! Dime, ¿qué necesitas?",
-                "Hola, ¿en qué podemos empezar a trabajar?"
-            ],
-            "gracias": [
-                "De nada, ¡es un placer ayudarte!",
-                "¡No hay de qué! Estoy aquí para lo que necesites.",
-                "A ti por usarme. ¡Cuando quieras!",
-                "Con gusto. Me alegra haber sido útil.",
-                "¡Encantado de ayudarte!"
-            ],
-            "quién eres": [
-                "Soy Amside AI, un asistente de inteligencia artificial diseñado para ayudarte.",
-                "Soy tu asistente virtual, Amside AI. ¿En qué puedo serte útil?",
-                "Me llamo Amside AI. Estoy aquí para procesar información y responder tus preguntas.",
-                "Soy una IA, Amside AI, creada para asistir en diversas tareas. ¿Qué te gustaría saber?",
-                "Puedes llamarme Amside AI, soy un programa de inteligencia artificial."
-            ],
-            "qué haces": [
-                "Puedo responder a tus preguntas, ayudarte con información y mantener conversaciones.",
-                "Mi función principal es procesar tu información y ofrecerte respuestas útiles.",
-                "Asisto en tareas informativas, respondo a tus dudas y te acompaño en el diálogo.",
-                "Estoy programado para ayudarte a encontrar información y resolver consultas.",
-                "Realizo diversas funciones, desde responder preguntas hasta generar ideas. ¿Qué tarea tienes en mente?"
-            ],
-            "ayuda": [
-                "Claro, ¿en qué necesitas ayuda específicamente?",
-                "¡Dime! ¿Qué problema o consulta tienes?",
-                "Estoy aquí para ayudarte. Por favor, explica lo que necesitas.",
-                "Con gusto te asisto. ¿Cuál es tu pregunta o dificultad?",
-                "¿Cómo puedo ser de utilidad? Explícame tu situación."
-            ],
-            "adiós": [
-                "¡Adiós! Que tengas un buen día.",
-                "¡Hasta pronto! Espero verte de nuevo.",
-                "Despedida. Cuídate mucho.",
-                "¡Nos vemos! Fue un placer conversar contigo.",
-                "¡Adiós! Siempre estoy aquí si me necesitas."
-            ],
-            "cómo estás": [
-                "Soy un programa de computadora, así que no tengo sentimientos, pero estoy listo para funcionar.",
-                "No tengo un estado de ánimo, pero estoy operando perfectamente y listo para ayudarte.",
-                "Como IA, no 'estoy' de ninguna manera, pero agradezco tu interés. ¿Y tú?",
-                "Estoy bien, gracias por preguntar. Siempre en línea y listo para asistir.",
-                "¡Excelente! Siempre listo para interactuar y ayudarte."
-            ],
-            "tiempo": [
-                "Para el tiempo actual, necesitaría saber tu ubicación exacta. ¿Me la podrías proporcionar?",
-                "No tengo acceso directo a datos meteorológicos en tiempo real. Te sugiero consultar una aplicación del tiempo.",
-                "El pronóstico del tiempo puede variar. ¿Hay alguna ciudad o región específica que te interese?",
-                "Lamentablemente, no puedo darte el tiempo ahora mismo. Te recomiendo usar un servicio de meteorología."
-            ],
-            "fecha": [
-                `Hoy es ${new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`,
-                `La fecha actual es ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}.`,
-                `Estamos a ${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}.`
-            ],
-            "sabadell": [
-                "Sabadell es una ciudad interesante en la provincia de Barcelona, Cataluña. ¿Te gustaría saber algo en particular sobre ella?",
-                "Ah, Sabadell. Conocida por su patrimonio industrial y cultural. ¿Hay algo en lo que pueda ayudarte relacionado con Sabadell?",
-                "Sí, Sabadell es una ciudad importante en Cataluña. ¿Qué te interesa sobre ella?"
-            ],
-            "cataluña": [
-                "Cataluña es una comunidad autónoma de España con una rica historia y cultura. ¿Hay algo específico que te interese sobre Cataluña?",
-                "Una región fascinante, Cataluña. Famosa por su lengua, gastronomía y ciudades como Barcelona.",
-                "Sí, conozco Cataluña. Es un lugar con una identidad cultural muy marcada en España."
-            ],
-            "españa": [
-                "España es un país fascinante en la península ibérica, con una gran diversidad geográfica y cultural.",
-                "Conozco España. Es un país miembro de la Unión Europea y tiene una rica historia.",
-                "España es un lugar con una gran historia y una influencia cultural significativa en el mundo. ¿Qué te gustaría explorar?"
-            ],
-            "ia": [
-                "Soy una IA, una Inteligencia Artificial, diseñada para interactuar y procesar información.",
-                "La IA es un campo de la informática que busca crear máquinas capaces de realizar tareas que requieren inteligencia humana.",
-                "Cuando hablamos de IA, nos referimos a sistemas que pueden aprender, razonar y percibir su entorno."
-            ],
-            "robot": [
-                "No soy un robot físico, soy un programa de software, una inteligencia artificial.",
-                "Aunque mi mente es artificial, no tengo un cuerpo como un robot. Existo en el ámbito digital.",
-                "La diferencia principal es que un robot tiene una forma física, yo soy un sistema de software."
-            ],
-            "futuro": [
-                "El futuro es un concepto fascinante. ¿Qué aspecto del futuro te intriga más?",
-                "Las predicciones sobre el futuro son complejas y variadas. ¿Estás pensando en alguna tecnología o tendencia en particular?",
-                "No puedo predecir el futuro, pero puedo darte información sobre tendencias y posibles desarrollos en diversas áreas."
-            ],
-            "qué opinas": [
-                "Como IA, no tengo opiniones personales, pero puedo ofrecerte información basada en los datos que he procesado.",
-                "Mi objetivo es ser neutral y proporcionar información objetiva. ¿Sobre qué tema te gustaría que te informara?",
-                "No tengo capacidad para opinar. Estoy diseñado para ser un asistente informativo."
-            ],
-            "internet": [
-                "Internet es una red global de computadoras que permite el intercambio de información. Es una herramienta poderosa.",
-                "La red de redes, Internet, ha revolucionado la comunicación y el acceso al conocimiento.",
-                "Internet es donde resido y obtengo la mayor parte de mi información. Es un espacio vasto de datos."
-            ],
-            "clima": [
-                "¿Quieres saber sobre el clima en alguna región o simplemente información general sobre patrones climáticos?",
-                "Para darte información precisa sobre el clima, necesito saber a qué lugar te refieres.",
-                "El clima es un sistema complejo. ¿Te refieres al tiempo atmosférico o a los patrones climáticos a largo plazo?"
-            ],
-            "comida": [
-                "La comida es un tema delicioso. ¿Tienes alguna pregunta sobre recetas, nutrición o algún plato en particular?",
-                "¡Me encanta hablar de comida! Aunque no puedo probarla, puedo darte mucha información sobre ella.",
-                "Hay una diversidad increíble de gastronomía en el mundo. ¿Sobre qué tipo de comida te gustaría conversar?"
-            ],
-            "deporte": [
-                "El deporte es una gran pasión para muchas personas. ¿Hay algún deporte o evento que te interese especialmente?",
-                "Desde el fútbol hasta el ajedrez, el deporte abarca muchas disciplinas. ¿Cuál es tu interés?",
-                "Puedo darte datos sobre historia del deporte, reglas, jugadores famosos, etc. ¿Qué te apetece saber?"
-            ],
-            "música": [
-                "La música es un lenguaje universal. ¿Qué género o artista te gusta escuchar?",
-                "Hay tantos géneros y estilos musicales. ¿Tienes alguna pregunta sobre un artista o la teoría musical?",
-                "La música tiene un impacto increíble en las emociones. ¿Qué tipo de música te gustaría explorar?"
-            ],
-            "cine": [
-                "El cine es una forma de arte muy expresiva. ¿Buscas recomendaciones, información sobre películas o directores?",
-                "Desde clásicos hasta estrenos, el mundo del cine es vasto. ¿Cuál es tu interés?",
-                "Puedo hablarte de géneros cinematográficos, actores, o la historia del cine. ¿Qué te apetece?"
-            ],
-            "libro": [
-                "Los libros son puertas a mundos. ¿Estás buscando un género, un autor o un libro en particular?",
-                "Leer es una forma maravillosa de aprender y evadirse. ¿Qué tipo de libros disfrutas?",
-                "La literatura es inmensa. Si me das más detalles, puedo ayudarte a encontrar lo que buscas."
-            ],
-            "aprender": [
-                "¡Me encanta que quieras aprender! ¿Qué te gustaría estudiar o comprender mejor?",
-                "El aprendizaje es un viaje continuo. ¿Hay algún tema específico en el que pueda ayudarte a profundizar?",
-                "Estoy aquí para facilitar tu proceso de aprendizaje. Dime qué área te interesa."
-            ],
-            "programar": [
-                "La programación es una habilidad muy valiosa. ¿Qué lenguaje o concepto te gustaría aprender?",
-                "Si te interesa programar, puedo darte información sobre lenguajes, frameworks y mejores prácticas.",
-                "El mundo de la programación es vasto y emocionante. ¿Por dónde te gustaría empezar?"
-            ],
-            "salud": [
-                "La salud es fundamental. No soy un profesional médico, pero puedo ofrecer información general sobre bienestar o enfermedades comunes.",
-                "Para temas de salud, siempre es mejor consultar a un profesional. Sin embargo, puedo darte información básica.",
-                "Hay muchos aspectos de la salud. ¿Hay algo específico sobre nutrición, ejercicio o bienestar mental que te interese?"
-            ],
-            "educación": [
-                "La educación es clave para el desarrollo. ¿Estás buscando información sobre sistemas educativos, cursos o consejos de estudio?",
-                "Siempre es un buen momento para hablar de educación. ¿Qué aspecto te gustaría explorar?",
-                "Puedo proporcionarte información sobre diferentes modelos educativos o recursos de aprendizaje."
-            ]
-        };
-
-        function getAIResponse(message) {
-            const lowerCaseMessage = message.toLowerCase();
-            let response = null;
-
-            for (const keyword in predefinedResponses) {
-                if (lowerCaseMessage.includes(keyword)) {
-                    const responses = predefinedResponses[keyword];
-                    response = responses[Math.floor(Math.random() * responses.length)];
-                    break;
-                }
-            }
-
-            if (!response) {
-                const genericResponses = [
-                    "No estoy seguro de haber entendido. ¿Podrías reformular tu pregunta?",
-                    "Interesante. ¿Puedes darme más detalles?",
-                    "Mi conocimiento es vasto, pero esa consulta me elude por ahora. ¿Podrías ser más específico?",
-                    "Lo siento, no tengo una respuesta predefinida para eso. ¿Hay algo más en lo que pueda ayudarte?",
-                    "Esa es una buena pregunta. Permíteme pensar... Oh, espera, necesito más información."
-                ];
-                response = genericResponses[Math.floor(Math.random() * genericResponses.length)];
-            }
-            return response;
-        }
+        // --- Configuración de la IA de Hugging Face ---
+        // ¡CAMBIA ESTO CON TU TOKEN REAL DE HUGGING FACE!
+        const HF_ACCESS_TOKEN = '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'; 
+        const hf = new window.HfInference(HF_ACCESS_TOKEN); // Usamos window.HfInference ya que se expuso globalmente
+        const MODEL_ID = 'sarvamai/sarvam-m'; // El modelo que queremos usar
 
         // Función para añadir un solo mensaje al chat
         function addMessageToChat(msg) {
@@ -504,25 +344,22 @@
                 userMessageDiv.classList.add('user-message');
                 userMessageDiv.textContent = msg.text;
                 messageContainer.appendChild(userMessageDiv);
-                // El indicador de carga se añade en la lógica del botón de enviar
-                // para que solo aparezca al momento de enviar y no en el historial.
             } else if (msg.sender === 'ai') {
                 const aiMessageDiv = document.createElement('div');
                 aiMessageDiv.classList.add('message');
                 aiMessageDiv.textContent = msg.text;
-                messageContainer.appendChild(aiMessageDiv); // Añadir al contenedor
+                messageContainer.appendChild(aiMessageDiv);
             } else if (msg.sender === 'error') {
                 const errorMessageDiv = document.createElement('div');
                 errorMessageDiv.classList.add('error-message');
                 errorMessageDiv.textContent = msg.text;
-                messageContainer.appendChild(errorMessageDiv); // Añadir al contenedor
+                messageContainer.appendChild(errorMessageDiv);
             }
             chatMessages.appendChild(messageContainer);
             scrollToBottom();
         }
 
-        // Modificamos displayChat para que vacíe y luego añada,
-        // esto es útil cuando se carga un historial desde la lista de chats.
+        // Esta función se usa para cargar un historial completo (ej. al seleccionar un chat de la lista)
         function displayChat(messages) {
             chatMessages.innerHTML = ''; // Vaciar todo antes de cargar el historial
             messages.forEach(msg => {
@@ -567,7 +404,7 @@
             if (currentChat.length > 0 && firstUserMessage) {
                 const chatName = firstUserMessage.substring(0, 25);
                 // Evitar duplicados si el chat ya fue guardado o si es el chat vacío inicial
-                if (!chatHistory.some(chat => chat.messages === currentChat) && currentChat.length > 1) { // Asegurarse que haya mensajes de usuario
+                if (!chatHistory.some(chat => chat.messages === currentChat) && currentChat.length > 1) {
                     chatHistory.unshift({ name: chatName, messages: [...currentChat] }); // Usar spread para guardar una copia
                     updateChatList();
                 }
@@ -579,60 +416,82 @@
             if (currentChat.length > 1 && currentChat[0].sender === 'ai' && currentChat[1].sender === 'user') {
                 saveChat(currentChat[1].text);
             }
-            currentChat = [{ sender: 'ai', text: 'Bienvenido a Amside AI.' }];
-            displayChat(currentChat); // Mostrar el mensaje de bienvenida
+            currentChat = [{ sender: 'ai', text: 'Bienvenido a Amside AI. Estoy aquí para ayudarte. ¿Qué te gustaría saber?' }];
+            displayChat(currentChat);
         }
 
-        sendButton.addEventListener('click', () => {
+        sendButton.addEventListener('click', async () => { // Convertimos la función a asíncrona
             const messageText = inputField.value.trim();
-            if (messageText !== '') {
-                const isFirstUserMessageInChat = currentChat.length === 1 && currentChat[0].sender === 'ai';
+            if (messageText === '') {
+                return; // No enviar mensajes vacíos
+            }
 
-                const userMessage = { sender: 'user', text: messageText };
-                currentChat.push(userMessage);
+            const isFirstUserMessageInChat = currentChat.length === 1 && currentChat[0].sender === 'ai';
 
-                // Añadir directamente el mensaje del usuario con el indicador de carga
-                const userMessageContainer = document.createElement('div');
-                userMessageContainer.classList.add('user-message-container');
-                const userMessageDiv = document.createElement('div');
-                userMessageDiv.classList.add('user-message');
-                userMessageDiv.textContent = userMessage.text;
-                userMessageContainer.appendChild(userMessageDiv);
+            const userMessage = { sender: 'user', text: messageText };
+            currentChat.push(userMessage);
 
-                const loadingIndicator = document.createElement('div');
-                loadingIndicator.classList.add('loading-indicator');
-                loadingIndicator.innerHTML = '<div class="loading-spinner"></div> Procesando...';
-                userMessageContainer.appendChild(loadingIndicator); // Añadir el indicador al contenedor del mensaje del usuario
+            const userMessageContainer = document.createElement('div');
+            userMessageContainer.classList.add('user-message-container');
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.classList.add('user-message');
+            userMessageDiv.textContent = userMessage.text;
+            userMessageContainer.appendChild(userMessageDiv);
+
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.classList.add('loading-indicator');
+            loadingIndicator.innerHTML = '<div class="loading-spinner"></div> Procesando...';
+            userMessageContainer.appendChild(loadingIndicator);
+            
+            chatMessages.appendChild(userMessageContainer);
+            scrollToBottom();
+
+            inputField.value = ''; // Limpiar el campo de entrada
+
+            try {
+                // Formatear los mensajes para la API de Hugging Face Chat Completion
+                // El modelo 'sarvamai/sarvam-m' espera el formato de mensajes de chat
+                const messagesForAI = currentChat.map(msg => ({
+                    role: msg.sender === 'user' ? 'user' : 'assistant',
+                    content: msg.text
+                }));
                 
-                chatMessages.appendChild(userMessageContainer); // Añadir el contenedor completo al chat
-                scrollToBottom();
-
-                inputField.value = ''; // Limpiar el campo de entrada
-
-                // Simular el procesamiento de la IA
-                setTimeout(() => {
-                    const aiResponseText = getAIResponse(messageText);
-                    const aiResponse = { sender: 'ai', text: aiResponseText };
-
-                    // Eliminar el indicador de carga del DOM
-                    if (loadingIndicator && userMessageContainer.contains(loadingIndicator)) {
-                        loadingIndicator.remove();
+                const response = await hf.chatCompletion({
+                    model: MODEL_ID,
+                    messages: messagesForAI, // Envía todo el historial para dar contexto a la IA
+                    parameters: {
+                        max_new_tokens: 250, // Longitud máxima de la respuesta de la IA
+                        temperature: 0.7, // Controla la creatividad (más alto = más aleatorio)
+                        do_sample: true, // Habilita el muestreo para respuestas más variadas
+                        // top_p: 0.9, // Puedes añadir más parámetros para afinar la generación
                     }
+                });
 
-                    currentChat.push(aiResponse); // Añadir la respuesta de la IA al chat actual
+                const aiResponseText = response.choices[0].message.content;
+                const aiResponse = { sender: 'ai', text: aiResponseText };
+                currentChat.push(aiResponse);
 
-                    // Añadir la respuesta de la IA directamente al DOM
-                    const aiMessageDiv = document.createElement('div');
-                    aiMessageDiv.classList.add('message');
-                    aiMessageDiv.textContent = aiResponse.text;
-                    chatMessages.appendChild(aiMessageDiv); // Añadir directamente
-                    scrollToBottom();
+                // Eliminar el indicador de carga del DOM
+                if (loadingIndicator && userMessageContainer.contains(loadingIndicator)) {
+                    loadingIndicator.remove();
+                }
 
+                // Añadir la respuesta de la IA directamente al DOM
+                addMessageToChat(aiResponse); // Usamos la función auxiliar para añadir mensajes
+                
+                if (isFirstUserMessageInChat) {
+                    saveChat(messageText);
+                }
 
-                    if (isFirstUserMessageInChat) {
-                        saveChat(messageText);
-                    }
-                }, 1500); // Simula un tiempo de procesamiento
+            } catch (error) {
+                console.error("Error al obtener respuesta de la IA:", error);
+                // Si ocurre un error, muestra un mensaje de error al usuario
+                if (loadingIndicator && userMessageContainer.contains(loadingIndicator)) {
+                    loadingIndicator.remove();
+                }
+                const errorMessage = { sender: 'error', text: "Lo siento, hubo un error al conectar con la IA. Por favor, asegúrate de que tu token es correcto y inténtalo de nuevo más tarde." };
+                currentChat.push(errorMessage);
+                addMessageToChat(errorMessage); // Añadir directamente al DOM
             }
         });
 
